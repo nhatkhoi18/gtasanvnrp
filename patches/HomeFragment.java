@@ -28,7 +28,7 @@ import java.util.List;
 public class HomeFragment extends Fragment {
 
     private static final String[][] SAMP_BOOTSTRAP_FILES = new String[][] {
-            {"data/script/mainV1.scm", "main.scm"},
+            {"data/script/mainv1.scm", "main.scm"},
             {"data/script/scriptv1.img", "script.img"},
             {"data/peds.ide", "peds.ide"},
             {"data/vehicles.ide", "vehicles.ide"},
