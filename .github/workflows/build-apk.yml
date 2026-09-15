@@ -20,11 +20,13 @@ jobs:
       - name: Clone upstream client
         run: git clone --depth 1 https://github.com/JohnPeriaX/samp-mobile-2.11.311.git android-src
 
+      - name: Apply VN-RP diagnostic patch
+        run: |
+          cp patches/HomeFragment.java android-src/app/src/main/java/com/kurdish/roleplay/launcher/HomeFragment.java
+
       - name: Patch duplicate native libraries
         working-directory: android-src
         run: |
-          # libbass.so and libbass_ssl.so are linked by CMake from vendor/bass,
-          # so keeping the same files in jniLibs makes AGP package them twice.
           rm -f app/src/main/jniLibs/arm64-v8a/libbass.so
           rm -f app/src/main/jniLibs/arm64-v8a/libbass_ssl.so
 
@@ -56,7 +58,7 @@ jobs:
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: GTA-SA-Mobile-debug
+          name: GTA-SA-Mobile-diagnostic
           path: android-src/app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
           retention-days: 14
