@@ -20,9 +20,55 @@ jobs:
       - name: Clone upstream client
         run: git clone --depth 1 https://github.com/JohnPeriaX/samp-mobile-2.11.311.git android-src
 
-      - name: Apply VN-RP diagnostic patch
+      - name: Apply VN-RP launcher patches
         run: |
           cp patches/HomeFragment.java android-src/app/src/main/java/com/kurdish/roleplay/launcher/HomeFragment.java
+          cp patches/GameDataImporter.java android-src/app/src/main/java/com/kurdish/roleplay/launcher/util/GameDataImporter.java
+
+      - name: Add Android document tree dependency
+        working-directory: android-src
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('app/build.gradle')
+          s = p.read_text()
+          marker = "implementation 'androidx.appcompat:appcompat:1.6.1'"
+          dep = "implementation 'androidx.documentfile:documentfile:1.0.1'"
+          if dep not in s:
+              s = s.replace(marker, marker + "\n    " + dep)
+          p.write_text(s)
+          PY
+
+      - name: Patch VN-RP server defaults and native connection
+        working-directory: android-src
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          # Native settings defaults.
+          p = Path('app/src/main/cpp/multiplayer/samp/Settings/Settings.cpp')
+          s = p.read_text()
+          s = s.replace('reader.Get("client", "host", "141.95.234.17")', 'reader.Get("client", "host", "14.187.227.176")')
+          s = s.replace('reader.GetInteger("client", "port", 1417)', 'reader.GetInteger("client", "port", 7777)')
+          p.write_text(s)
+
+          # Native connection must use parsed settings, not the old hard-coded server.
+          p = Path('app/src/main/cpp/multiplayer/samp/main.cpp')
+          s = p.read_text()
+          old = 'pNetGame = new CNetGame("gta-irz.com", 7777, "Luca_Runky", "");'
+          new = 'pNetGame = new CNetGame(pSettings->Get().szHost, pSettings->Get().iPort, pSettings->Get().szNickName, pSettings->Get().szPassword);'
+          if old not in s:
+              raise SystemExit('Expected hard-coded CNetGame line not found')
+          s = s.replace(old, new)
+          p.write_text(s)
+
+          # Java config fallback also targets VN-RP.
+          p = Path('app/src/main/java/com/kurdish/roleplay/launcher/util/ConfigValidator.java')
+          s = p.read_text()
+          s = s.replace('host=127.0.0.1', 'host=14.187.227.176')
+          s = s.replace('sb.append("port=7777\\n")', 'sb.append("port=7777\\n")')
+          p.write_text(s)
+          PY
 
       - name: Patch duplicate native libraries
         working-directory: android-src
@@ -58,7 +104,7 @@ jobs:
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: GTA-SA-Mobile-diagnostic
+          name: VN-RP-Mobile-data-importer
           path: android-src/app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
           retention-days: 14
