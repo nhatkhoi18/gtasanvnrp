@@ -34,7 +34,10 @@ public class HomeFragment extends Fragment {
             {"data/vehicles.ide", "vehicles.ide"},
             {"data/gta.dat", "gta.dat"},
             {"data/handling.cfg", "handling.cfg"},
-            {"data/weapon.dat", "weapon.dat"}
+            {"data/weapon.dat", "weapon.dat"},
+            // Native InitGui() requires SAMP/fonts/arial_bold.ttf, but upstream does not ship that cache file.
+            // Use a bundled valid TTF as a temporary diagnostic fallback so ImGui font loading cannot fail on a missing file.
+            {"Fonts/HELVETICANEUELT-MEDIUMCOND.TTF", "fonts/arial_bold.ttf"}
     };
 
     @Nullable
@@ -61,6 +64,16 @@ public class HomeFragment extends Fragment {
         List<String> errors = new ArrayList<>();
         List<String> copied = new ArrayList<>();
         File sampDir = GameStorage.getSampDirectory(requireContext());
+        File baseDir = GameStorage.getGameBaseDirectory(requireContext());
+
+        // Keep the previous native crash log as .prev, then start this launch cleanly.
+        try {
+            File log = new File(baseDir, "samp_log.txt");
+            File prev = new File(baseDir, "samp_log.prev.txt");
+            if (prev.exists()) prev.delete();
+            if (log.exists()) log.renameTo(prev);
+        } catch (Throwable ignored) {
+        }
 
         for (String[] mapping : SAMP_BOOTSTRAP_FILES) {
             File destination = new File(sampDir, mapping[1]);
@@ -162,6 +175,7 @@ public class HomeFragment extends Fragment {
                                  boolean arm64, boolean emulator) {
         try {
             File report = new File(sampDir, "vnrp_boot.txt");
+            File font = new File(sampDir, "fonts/arial_bold.ttf");
             String text = "VN-RP runtime preflight\n" +
                     "model=" + Build.MODEL + "\n" +
                     "manufacturer=" + Build.MANUFACTURER + "\n" +
@@ -171,6 +185,7 @@ public class HomeFragment extends Fragment {
                     "arm64=" + arm64 + "\n" +
                     "emulator=" + emulator + "\n" +
                     "base=" + GameStorage.getGameBasePath(requireContext()) + "\n" +
+                    "fontExists=" + font.exists() + " fontSize=" + (font.exists() ? font.length() : -1) + "\n" +
                     "copied=" + copied + "\n" +
                     "errors=" + errors + "\n";
             try (FileOutputStream output = new FileOutputStream(report, false)) {
