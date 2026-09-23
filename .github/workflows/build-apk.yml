@@ -14,7 +14,9 @@ jobs:
 
       - name: Set VN-RP server
         working-directory: android-src
-        run: sed -i 's/127.0.0.1/14.186.26.111/g' app/src/main/cpp/samp/servers.h
+        run: |
+          sed -i 's/127.0.0.1/14.186.26.111/g' app/src/main/cpp/samp/servers.h
+          sed -i 's#samp_widgets/playerTabList.h#samp_widgets/playertablist.h#g' app/src/main/cpp/samp/gui/gui.h
 
       - name: Setup Java
         uses: actions/setup-java@v4
