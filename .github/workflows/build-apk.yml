@@ -18,6 +18,7 @@ jobs:
           sed -i 's/127.0.0.1/14.186.26.111/g' app/src/main/cpp/samp/servers.h
           sed -i 's#samp_widgets/playerTabList.h#samp_widgets/playertablist.h#g' app/src/main/cpp/samp/gui/gui.h
           sed -i 's/#include "RGBA.h"/#include "rgba.h"/' app/src/main/cpp/samp/game/rgba.cpp
+          sed -i 's#../vendor/RakNet/#../vendor/raknet/#g' app/src/main/cpp/samp/voice_new/Network.h
 
       - name: Setup Java
         uses: actions/setup-java@v4
