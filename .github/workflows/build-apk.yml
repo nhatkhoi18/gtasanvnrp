@@ -19,6 +19,14 @@ jobs:
           sed -i 's#samp_widgets/playerTabList.h#samp_widgets/playertablist.h#g' app/src/main/cpp/samp/gui/gui.h
           sed -i 's/#include "RGBA.h"/#include "rgba.h"/' app/src/main/cpp/samp/game/rgba.cpp
           sed -i 's#../vendor/RakNet/#../vendor/raknet/#g' app/src/main/cpp/samp/voice_new/Network.h
+          sed -i '1{/^\/\/ you dont make this file$/d;}' app/src/main/res/layout/attachedit.xml
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('app/src/main/cpp/samp/settings.cpp')
+          s = p.read_text(encoding='utf-8-sig')
+          s = s.replace('''\tif(reader.ParseError() < 0)\n\t{\n\t\tFLog("Error: can\'t load %s", buff);\n\t\tstd::terminate();\n\t\treturn;\n\t}''', '''\tif(reader.ParseError() < 0)\n\t{\n\t\tFLog("Warning: can\'t load %s; using built-in defaults", buff);\n\t}''')
+          p.write_text(s, encoding='utf-8')
+          PY
 
       - name: Setup Java
         uses: actions/setup-java@v4
