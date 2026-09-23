@@ -26,6 +26,8 @@ jobs:
           cp patches/GameDataImporter.java android-src/app/src/main/java/com/kurdish/roleplay/launcher/util/GameDataImporter.java
           cp patches/GameActivityBase.java android-src/app/src/main/java/com/rockstargames/oswrapper/GameActivityBase.java
           cp patches/GameThread.java android-src/app/src/main/java/com/rockstargames/oswrapper/GameThread.java
+          cp patches/GameNative.java android-src/app/src/main/java/com/rockstargames/oswrapper/GameNative.java
+          cp patches/SAMP.java android-src/app/src/main/java/com/kurdish/roleplay/game/SAMP.java
 
       - name: Add Android document tree dependency
         working-directory: android-src
@@ -102,7 +104,7 @@ jobs:
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: VN-RP-Mobile-EGL-crash-fix
+          name: VN-RP-Mobile-startup-crash-fix
           path: android-src/app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
           retention-days: 14
