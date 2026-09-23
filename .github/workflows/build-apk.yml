@@ -20,7 +20,15 @@ jobs:
           sed -i "s/abiFilters 'armeabi-v7a', 'arm64-v8a'/abiFilters 'arm64-v8a'/" app/build.gradle
           sed -i 's/#include "RGBA.h"/#include "rgba.h"/' app/src/main/cpp/samp/game/rgba.cpp
           sed -i 's#../vendor/RakNet/#../vendor/raknet/#g' app/src/main/cpp/samp/voice_new/Network.h
-          sed -i '1{/^\/\/ you dont make this file$/d;}' app/src/main/res/layout/attachedit.xml
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('app/src/main/res/layout/attachedit.xml')
+          s = p.read_text(encoding='utf-8-sig')
+          if s.startswith('// you dont make this file'):
+              s = s.split('\n', 1)[1]
+          s = s.lstrip()
+          p.write_text(s, encoding='utf-8')
+          PY
           python3 - <<'PY'
           from pathlib import Path
           p = Path('app/src/main/cpp/samp/settings.cpp')
