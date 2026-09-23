@@ -24,6 +24,8 @@ jobs:
         run: |
           cp patches/HomeFragment.java android-src/app/src/main/java/com/kurdish/roleplay/launcher/HomeFragment.java
           cp patches/GameDataImporter.java android-src/app/src/main/java/com/kurdish/roleplay/launcher/util/GameDataImporter.java
+          cp patches/GameActivityBase.java android-src/app/src/main/java/com/rockstargames/oswrapper/GameActivityBase.java
+          cp patches/GameThread.java android-src/app/src/main/java/com/rockstargames/oswrapper/GameThread.java
 
       - name: Add Android document tree dependency
         working-directory: android-src
@@ -45,14 +47,12 @@ jobs:
           python3 - <<'PY'
           from pathlib import Path
 
-          # Native settings defaults.
           p = Path('app/src/main/cpp/multiplayer/samp/Settings/Settings.cpp')
           s = p.read_text()
           s = s.replace('reader.Get("client", "host", "141.95.234.17")', 'reader.Get("client", "host", "14.186.26.111")')
           s = s.replace('reader.GetInteger("client", "port", 1417)', 'reader.GetInteger("client", "port", 7777)')
           p.write_text(s)
 
-          # Native connection must use parsed settings, not the old hard-coded server.
           p = Path('app/src/main/cpp/multiplayer/samp/main.cpp')
           s = p.read_text()
           old = 'pNetGame = new CNetGame("gta-irz.com", 7777, "Luca_Runky", "");'
@@ -62,89 +62,9 @@ jobs:
           s = s.replace(old, new)
           p.write_text(s)
 
-          # Java config fallback also targets VN-RP.
           p = Path('app/src/main/java/com/kurdish/roleplay/launcher/util/ConfigValidator.java')
           s = p.read_text()
           s = s.replace('host=127.0.0.1', 'host=14.186.26.111')
-          s = s.replace('sb.append("port=7777\\n")', 'sb.append("port=7777\\n")')
-          p.write_text(s)
-
-          # Fix immediate Play crash: upstream marks the SurfaceView active BEFORE
-          # InitEGLAndGLES2(), which prevents creation of the EGL window surface.
-          p = Path('app/src/main/java/com/rockstargames/oswrapper/GameActivityBase.java')
-          s = p.read_text()
-          old = '''                GameThread.INSTANCE.cachedSurfaceHolder = holder;
-                GameThread.INSTANCE.viewIsActive = true;
-
-                // Dynamic Resolution Scaling for Speed
-                if (GameThread.INSTANCE.fixedWidth > 0) {
-                    holder.setFixedSize(GameThread.INSTANCE.fixedWidth, GameThread.INSTANCE.fixedHeight);
-                }
-                GameThread.INSTANCE.InitEGLAndGLES2(3);'''
-          new = '''                GameThread.INSTANCE.cachedSurfaceHolder = holder;
-                GameThread.INSTANCE.viewIsActive = false;
-
-                // Dynamic Resolution Scaling for Speed
-                if (GameThread.INSTANCE.fixedWidth > 0) {
-                    holder.setFixedSize(GameThread.INSTANCE.fixedWidth, GameThread.INSTANCE.fixedHeight);
-                }
-                boolean eglReady = GameThread.INSTANCE.InitEGLAndGLES2(3);
-                GameThread.INSTANCE.viewIsActive = eglReady;'''
-          if old not in s:
-              raise SystemExit('Expected GameActivityBase surfaceCreated block not found')
-          s = s.replace(old, new)
-          p.write_text(s)
-
-          # Second guard: create/recreate the EGL window surface whenever it is absent,
-          # instead of relying only on viewIsActive.
-          p = Path('app/src/main/java/com/rockstargames/oswrapper/GameThread.java')
-          s = p.read_text()
-          old = '''            if (!this.viewIsActive) {
-                System.out.println("Yes! Calling create surface");
-                createEGLSurface(this.cachedSurfaceHolder);
-                System.out.println("Done creating surface");
-            }
-            this.viewIsActive = true;
-            this.SwapBufferSkip = 1;
-            return true;'''
-          new = '''            if (this.eglSurface == null) {
-                if (this.cachedSurfaceHolder == null) {
-                    System.out.println("Cannot create EGL surface: SurfaceHolder is null");
-                    this.viewIsActive = false;
-                    return false;
-                }
-                System.out.println("Creating EGL window surface");
-                if (!createEGLSurface(this.cachedSurfaceHolder)) {
-                    System.out.println("Failed creating EGL window surface");
-                    this.viewIsActive = false;
-                    return false;
-                }
-                System.out.println("Done creating EGL window surface");
-            }
-            this.viewIsActive = true;
-            this.SwapBufferSkip = 1;
-            return true;'''
-          if old not in s:
-              raise SystemExit('Expected GameThread EGL block not found')
-          s = s.replace(old, new)
-
-          old = '''        this.eglSurface = this.egl.eglCreateWindowSurface(this.eglDisplay, this.eglConfig, surfaceHolder, (int[]) null);
-        Log.d("dfs", "eglCreateWindowSurface err: " + this.egl.eglGetError());'''
-          new = '''        if (surfaceHolder == null || this.egl == null || this.eglDisplay == null || this.eglConfig == null) {
-            Log.e("dfs", "createEGLSurface called without a valid holder/display/config");
-            return false;
-        }
-        this.eglSurface = this.egl.eglCreateWindowSurface(this.eglDisplay, this.eglConfig, surfaceHolder, (int[]) null);
-        int surfaceError = this.egl.eglGetError();
-        Log.d("dfs", "eglCreateWindowSurface err: " + surfaceError);
-        if (this.eglSurface == null || this.eglSurface == EGL10.EGL_NO_SURFACE || surfaceError != EGL10.EGL_SUCCESS) {
-            Log.e("dfs", "eglCreateWindowSurface failed");
-            this.eglSurface = null;
-            return false;
-        }'''
-          if old not in s:
-              raise SystemExit('Expected GameThread createEGLSurface block not found')
-          s = s.replace(old, new)
           p.write_text(s)
           PY
 
