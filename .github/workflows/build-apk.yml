@@ -17,6 +17,7 @@ jobs:
         run: |
           sed -i 's/127.0.0.1/14.186.26.111/g' app/src/main/cpp/samp/servers.h
           sed -i 's#samp_widgets/playerTabList.h#samp_widgets/playertablist.h#g' app/src/main/cpp/samp/gui/gui.h
+          sed -i "s/abiFilters 'armeabi-v7a', 'arm64-v8a'/abiFilters 'arm64-v8a'/" app/build.gradle
           sed -i 's/#include "RGBA.h"/#include "rgba.h"/' app/src/main/cpp/samp/game/rgba.cpp
           sed -i 's#../vendor/RakNet/#../vendor/raknet/#g' app/src/main/cpp/samp/voice_new/Network.h
           sed -i '1{/^\/\/ you dont make this file$/d;}' app/src/main/res/layout/attachedit.xml
