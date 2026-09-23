@@ -48,7 +48,7 @@ jobs:
           # Native settings defaults.
           p = Path('app/src/main/cpp/multiplayer/samp/Settings/Settings.cpp')
           s = p.read_text()
-          s = s.replace('reader.Get("client", "host", "141.95.234.17")', 'reader.Get("client", "host", "14.187.227.176")')
+          s = s.replace('reader.Get("client", "host", "141.95.234.17")', 'reader.Get("client", "host", "14.186.26.111")')
           s = s.replace('reader.GetInteger("client", "port", 1417)', 'reader.GetInteger("client", "port", 7777)')
           p.write_text(s)
 
@@ -65,7 +65,7 @@ jobs:
           # Java config fallback also targets VN-RP.
           p = Path('app/src/main/java/com/kurdish/roleplay/launcher/util/ConfigValidator.java')
           s = p.read_text()
-          s = s.replace('host=127.0.0.1', 'host=14.187.227.176')
+          s = s.replace('host=127.0.0.1', 'host=14.186.26.111')
           s = s.replace('sb.append("port=7777\\n")', 'sb.append("port=7777\\n")')
           p.write_text(s)
           PY
