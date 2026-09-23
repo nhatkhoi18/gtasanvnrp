@@ -1,71 +1,45 @@
-name: Build VN-RP Alternative Client
+name: Build VN-RP SA-MP 2.10
 
 on:
-  workflow_dispatch:
   push:
-    branches:
-      - main
-
-permissions:
-  contents: read
+    branches: [main]
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 75
     steps:
-      - name: Clone alternative client
+      - name: Clone source
         run: git clone --depth 1 https://github.com/junior-dior/SA-MP-Mobile-Client-2.10-x64.git android-src
 
-      - name: Patch server
+      - name: Set VN-RP server
         working-directory: android-src
-        run: |
-          sed -i 's/127\.0\.0\.1/14.186.26.111/g' app/src/main/cpp/samp/servers.h
-          sed -i 's/abiFilters '\''armeabi-v7a'\'', '\''arm64-v8a'\''/abiFilters '\''arm64-v8a'\''/' app/build.gradle
-          python3 - <<'PY'
-          from pathlib import Path
-          p = Path("app/src/main/cpp/samp/settings.cpp")
-          s = p.read_text(encoding="utf-8-sig")
-          s = s.replace('''\tif(reader.ParseError() < 0)
-\t{
-\t\tFLog("Error: can't load %s", buff);
-\t\tstd::terminate();
-\t\treturn;
-\t}''','''\tif(reader.ParseError() < 0)
-\t{
-\t\tFLog("Warning: settings.ini missing, using defaults");
-\t}''')
-          p.write_text(s, encoding="utf-8")
-          PY
+        run: sed -i 's/127.0.0.1/14.186.26.111/g' app/src/main/cpp/samp/servers.h
 
-      - name: Set up JDK 17
+      - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
 
-      - name: Install Android packages
-        shell: bash
+      - name: Setup Android SDK
         run: |
           export ANDROID_SDK_ROOT=/usr/local/lib/android/sdk
-          export ANDROID_HOME=$ANDROID_SDK_ROOT
           export PATH=$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools:$PATH
           yes | sdkmanager --licenses >/dev/null || true
-          sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0" "ndk;26.2.11394342" "cmake;3.22.1"
+          sdkmanager "platforms;android-34" "build-tools;34.0.0" "ndk;26.2.11394342" "cmake;3.22.1"
 
-      - name: Build APK
+      - name: Build
         working-directory: android-src
         env:
           ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
           ANDROID_HOME: /usr/local/lib/android/sdk
         run: |
           chmod +x gradlew
-          ./gradlew :app:assembleDebug --stacktrace --no-daemon
+          ./gradlew assembleDebug --no-daemon
 
-      - name: Upload APK
+      - name: Upload
         uses: actions/upload-artifact@v4
         with:
           name: VN-RP-SA-MP-2.10-ALT
           path: android-src/app/build/outputs/apk/debug/*.apk
-          if-no-files-found: error
-          retention-days: 14
